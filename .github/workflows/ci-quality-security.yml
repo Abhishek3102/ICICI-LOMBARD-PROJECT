@@ -1,0 +1,80 @@
+name: CI — Quality & Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    name: Backend — build & unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore backend/ClaimGuard.sln
+
+      - name: Build
+        run: dotnet build backend/ClaimGuard.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test backend/ClaimGuard.sln -c Release --no-build --logger "trx" --results-directory ./test-results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: ./test-results
+
+  frontend-tests:
+    name: Frontend — lint, typecheck & tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Jest tests
+        run: pnpm test
+
+  codeql:
+    name: Security — CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: csharp, javascript
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build backend for analysis
+        run: |
+          dotnet restore backend/ClaimGuard.sln
+          dotnet build backend/ClaimGuard.sln -c Release --no-restore
+
+      - uses: github/codeql-action/analyze@v3

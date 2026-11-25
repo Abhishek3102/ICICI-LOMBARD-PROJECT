@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: claimguard-web
+  namespace: claimguard
+  labels:
+    app: claimguard-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: claimguard-web
+  template:
+    metadata:
+      labels:
+        app: claimguard-web
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/OWNER/claimguard-web:latest # set by cd-k8s-deploy.yml
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_API_BASE_URL
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: NEXT_PUBLIC_API_BASE_URL }
+            - name: NEXT_PUBLIC_SUPABASE_URL
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: NEXT_PUBLIC_SUPABASE_URL }
+            - name: NEXT_PUBLIC_SUPABASE_ANON_KEY
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: NEXT_PUBLIC_SUPABASE_ANON_KEY }
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 200m
+              memory: 384Mi
+            limits:
+              cpu: "1"
+              memory: 768Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: claimguard-web
+  namespace: claimguard
+spec:
+  selector:
+    app: claimguard-web
+  ports:
+    - port: 80
+      targetPort: 3000

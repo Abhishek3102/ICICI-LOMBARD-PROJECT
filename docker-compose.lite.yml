@@ -1,0 +1,46 @@
+# Lite local stack: only the two stateless services run in Docker.
+# Postgres, Redis, Kafka and RabbitMQ stay on their free cloud tiers
+# (Supabase / Upstash / CloudAMQP), exactly like production.
+#
+#   cp .env.example .env   # fill in your cloud service credentials
+#   docker compose -f docker-compose.lite.yml up --build
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: src/ClaimGuard.Api/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Supabase: ${SUPABASE_CONNECTION}
+      Redis__Connection: ${REDIS_CONNECTION}
+      Kafka__BootstrapServers: ${KAFKA_BOOTSTRAP}
+      Kafka__SaslUsername: ${KAFKA_USER}
+      Kafka__SaslPassword: ${KAFKA_PASS}
+      RabbitMq__Url: ${RABBITMQ_URL}
+      Gemini__ApiKey: ${GEMINI_API_KEY}
+      Jwt__SigningSecret: ${JWT_SECRET}
+      Supabase__Url: ${SUPABASE_URL}
+      Supabase__ServiceRoleKey: ${SUPABASE_SERVICE_KEY}
+      Seed__BootstrapSecret: ${SEED_BOOTSTRAP_SECRET}
+      Cors__AllowedOrigins__0: http://localhost:3000
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:5000
+      NEXT_PUBLIC_SUPABASE_URL: ${SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+    depends_on:
+      api:
+        condition: service_healthy

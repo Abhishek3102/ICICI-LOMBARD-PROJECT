@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: claimguard-api
+  namespace: claimguard
+  labels:
+    app: claimguard-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: claimguard-api
+  template:
+    metadata:
+      labels:
+        app: claimguard-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/OWNER/claimguard-api:latest # set by cd-k8s-deploy.yml
+          ports:
+            - containerPort: 5000
+          env:
+            - name: ConnectionStrings__Supabase
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: SUPABASE_CONNECTION }
+            - name: Redis__Connection
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: REDIS_CONNECTION }
+            - name: Kafka__BootstrapServers
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: KAFKA_BOOTSTRAP }
+            - name: Kafka__SaslUsername
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: KAFKA_USER }
+            - name: Kafka__SaslPassword
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: KAFKA_PASS }
+            - name: RabbitMq__Url
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: RABBITMQ_URL }
+            - name: Gemini__ApiKey
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: GEMINI_API_KEY }
+            - name: Jwt__SigningSecret
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: JWT_SECRET }
+            - name: Supabase__Url
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: SUPABASE_URL }
+            - name: Supabase__ServiceRoleKey
+              valueFrom:
+                secretKeyRef: { name: claimguard-secrets, key: SUPABASE_SERVICE_KEY }
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: claimguard-api
+  namespace: claimguard
+spec:
+  selector:
+    app: claimguard-api
+  ports:
+    - port: 80
+      targetPort: 5000

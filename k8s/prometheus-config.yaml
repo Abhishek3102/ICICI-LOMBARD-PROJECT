@@ -1,0 +1,16 @@
+# Prometheus scrape configuration for the ClaimGuard API pods.
+# Apply with your Prometheus operator or merge into prometheus.yml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-claimguard-scrape
+  namespace: claimguard
+data:
+  claimguard.yml: |
+    scrape_configs:
+      - job_name: claimguard-api
+        metrics_path: /metrics
+        static_configs:
+          - targets: ["claimguard-api.claimguard.svc.cluster.local:80"]
+        # p95 latency, throughput and error rates come from prometheus-net's
+        # UseHttpMetrics() middleware; alert on claimguard:http_request_duration p95.
