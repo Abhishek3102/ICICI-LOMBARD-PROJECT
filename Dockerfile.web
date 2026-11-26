@@ -3,7 +3,9 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --no-frozen-lockfile
+# Cache the pnpm store across builds so failed downloads don't restart from zero
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --no-frozen-lockfile
 
 FROM node:22-alpine AS build
 WORKDIR /app

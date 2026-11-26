@@ -1,8 +1,7 @@
-pmOnFail: ignore
-
-minimumReleaseAgeExclude:
-  - '@next/*'
-  - next
-
-allowBuilds:
-  '@parcel/watcher': set this to true or false
+onlyBuiltDependencies:
+  - "@parcel/watcher"
+# Slow-link friendly fetch settings (pnpm 12 reads settings from this file)
+fetchTimeout: 300000
+fetchRetries: 5
+fetchRetryFactor: 3
+networkConcurrency: 4
