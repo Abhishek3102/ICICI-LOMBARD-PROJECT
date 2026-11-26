@@ -1,3 +1,4 @@
+using ClaimGuard.Api.Extensions;
 using ClaimGuard.Application.DTOs;
 using ClaimGuard.Application.Interfaces;
 using ClaimGuard.Application.Services;

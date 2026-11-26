@@ -1,3 +1,5 @@
+using ClaimGuard.Application.DTOs;
+
 namespace ClaimGuard.Application.Interfaces;
 
 /// <summary>Reliable point-to-point work queue (RabbitMQ) with dead-letter exchange for retries.</summary>

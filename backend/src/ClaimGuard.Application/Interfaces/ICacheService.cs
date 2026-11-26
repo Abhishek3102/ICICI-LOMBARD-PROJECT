@@ -1,3 +1,4 @@
+using ClaimGuard.Application.DTOs;
 using ClaimGuard.Domain.Entities;
 
 namespace ClaimGuard.Application.Interfaces;

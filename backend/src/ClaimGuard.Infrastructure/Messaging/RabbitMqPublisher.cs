@@ -3,6 +3,7 @@ using System.Text.Json;
 using ClaimGuard.Application.DTOs;
 using ClaimGuard.Application.Interfaces;
 using ClaimGuard.Infrastructure.Options;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
