@@ -6,7 +6,7 @@ metadata:
   labels:
     app: claimguard-api
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: claimguard-api
@@ -21,7 +21,8 @@ spec:
     spec:
       containers:
         - name: api
-          image: ghcr.io/OWNER/claimguard-api:latest # set by cd-k8s-deploy.yml
+          image: claimguard-api:local # set by cd-k8s-deploy.yml in CI; use a local tag for k3d
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
           env:
@@ -33,13 +34,13 @@ spec:
                 secretKeyRef: { name: claimguard-secrets, key: REDIS_CONNECTION }
             - name: Kafka__BootstrapServers
               valueFrom:
-                secretKeyRef: { name: claimguard-secrets, key: KAFKA_BOOTSTRAP }
+                secretKeyRef: { name: claimguard-secrets, key: KAFKA_BOOTSTRAP_SERVERS }
             - name: Kafka__SaslUsername
               valueFrom:
-                secretKeyRef: { name: claimguard-secrets, key: KAFKA_USER }
+                secretKeyRef: { name: claimguard-secrets, key: KAFKA_SASL_USERNAME }
             - name: Kafka__SaslPassword
               valueFrom:
-                secretKeyRef: { name: claimguard-secrets, key: KAFKA_PASS }
+                secretKeyRef: { name: claimguard-secrets, key: KAFKA_SASL_PASSWORD }
             - name: RabbitMq__Url
               valueFrom:
                 secretKeyRef: { name: claimguard-secrets, key: RABBITMQ_URL }
@@ -54,7 +55,7 @@ spec:
                 secretKeyRef: { name: claimguard-secrets, key: SUPABASE_URL }
             - name: Supabase__ServiceRoleKey
               valueFrom:
-                secretKeyRef: { name: claimguard-secrets, key: SUPABASE_SERVICE_KEY }
+                secretKeyRef: { name: claimguard-secrets, key: SUPABASE_SERVICE_ROLE_KEY }
           readinessProbe:
             httpGet:
               path: /health
