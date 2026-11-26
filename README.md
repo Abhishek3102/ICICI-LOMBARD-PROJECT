@@ -76,6 +76,13 @@ dotnet restore
 dotnet run --project src/ClaimGuard.Api     # https://localhost:5000 (Swagger at /swagger)
 ```
 
+Or from the repo root, one command that also maps `.env` keys to the config
+names ASP.NET Core expects:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run-api-local.ps1
+```
+
 All cloud credentials are read from `.env` — export them or paste them into
 `src/ClaimGuard.Api/appsettings.Development.json` (git-ignored). Missing Kafka/RabbitMQ/Redis
 config degrades gracefully: the consumer idles and the deterministic scorer is used instead of Gemini.
@@ -85,6 +92,12 @@ config degrades gracefully: the consumer idles and the deterministic scorer is u
 ```bash
 pnpm install
 pnpm dev        # http://localhost:3000
+```
+
+Or one command that also generates `.env.local` from `.env`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run-web-local.ps1
 ```
 
 ### F. First accounts & demo data
@@ -119,7 +132,10 @@ CI (`.github/workflows/ci-quality-security.yml`) runs both suites plus CodeQL (C
 CD (`.github/workflows/cd-k8s-deploy.yml`) builds both Docker images to GHCR and rolls them out
 to Kubernetes with readiness/liveness probes.
 
-### Local Docker (lite)
+### Local Docker (lite) — optional
+
+The app runs fully without Docker (sections D–E). Containerization is only
+needed if you want to reproduce the container deployment locally:
 
 ```bash
 docker compose -f docker-compose.lite.yml up --build
@@ -128,7 +144,10 @@ docker compose -f docker-compose.lite.yml up --build
 Only the stateless services are containerized; Postgres/Redis/Kafka/RabbitMQ remain on their
 cloud tiers, identical to production.
 
-### Kubernetes
+### Kubernetes — optional
+
+The CD workflow (`cd-k8s-deploy.yml`) is currently disabled (manual trigger
+only). To use it again, uncomment its push/tags triggers and:
 
 ```bash
 cp k8s/secrets.example.yaml k8s/secrets.yaml   # fill in, never commit
