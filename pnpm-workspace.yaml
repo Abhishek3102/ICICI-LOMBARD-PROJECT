@@ -1,5 +1,5 @@
-onlyBuiltDependencies:
-  - "@parcel/watcher"
+allowBuilds:
+  "@parcel/watcher": true
 # Slow-link friendly fetch settings (pnpm 12 reads settings from this file)
 fetchTimeout: 300000
 fetchRetries: 5
