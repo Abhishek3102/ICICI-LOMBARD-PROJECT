@@ -1,0 +1,12 @@
+# Keep the Docker build context small (was sending ~550 MB without this).
+node_modules
+.next
+.git
+.github
+backend
+k8s
+tests
+docs
+*.md
+.env
+.env.*
