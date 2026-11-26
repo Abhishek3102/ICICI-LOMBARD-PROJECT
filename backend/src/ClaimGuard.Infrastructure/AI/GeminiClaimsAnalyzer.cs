@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ClaimGuard.Application.DTOs;
@@ -80,8 +81,8 @@ public class GeminiClaimsAnalyzer(
                 Score: parsed.Score.Value,
                 Band: band,
                 Confidence: parsed.Confidence ?? 0.7,
-                Anomalies: parsed.Anomalies ?? Array.Empty<string>(),
-                ExtractedItems: parsed.ExtractedItems ?? Array.Empty<ExtractedLineItem>(),
+                Anomalies: parsed.Anomalies?.ToArray() ?? Array.Empty<string>(),
+                ExtractedItems: parsed.ExtractedItems?.ToArray() ?? Array.Empty<ExtractedLineItem>(),
                 Reasoning: string.IsNullOrWhiteSpace(parsed.Reasoning) ? "Gemini structured analysis." : parsed.Reasoning,
                 Engine: $"gemini:{cfg.Model}");
         }
@@ -94,20 +95,20 @@ public class GeminiClaimsAnalyzer(
 
     private static string BuildPrompt(Claim claim, Policy policy)
     {
-        return $"""
+        return $$"""
             You are an insurance claims fraud-triage analyst for an Indian general insurer.
             Analyze this claim and respond ONLY with JSON matching:
-            {{"score": <0-100 int>, "band": "<LOW|MEDIUM|HIGH>", "confidence": <0-1 float>,
-              "anomalies": ["<string>"], "extracted_items": [{{"description": "<string>", "amount": <number>}}],
-              "reasoning": "<one paragraph, explainable, audit-safe>"}}
+            {"score": <0-100 int>, "band": "<LOW|MEDIUM|HIGH>", "confidence": <0-1 float>,
+              "anomalies": ["<string>"], "extracted_items": [{"description": "<string>", "amount": <number>}],
+              "reasoning": "<one paragraph, explainable, audit-safe>"}
 
-            Policy type: {policy.PolicyType}
-            Sum insured: {policy.SumInsured}
-            Remaining balance: {policy.RemainingBalance}
-            Policy valid: {policy.ValidFrom:yyyy-MM-dd} to {policy.ValidTo:yyyy-MM-dd}
-            Claimed amount: {claim.ClaimedAmount}
-            Incident date: {claim.IncidentDate:yyyy-MM-dd}
-            Document URL: {claim.DocumentUrl}
+            Policy type: {{policy.PolicyType}}
+            Sum insured: {{policy.SumInsured}}
+            Remaining balance: {{policy.RemainingBalance}}
+            Policy valid: {{policy.ValidFrom:yyyy-MM-dd}} to {{policy.ValidTo:yyyy-MM-dd}}
+            Claimed amount: {{claim.ClaimedAmount}}
+            Incident date: {{claim.IncidentDate:yyyy-MM-dd}}
+            Document URL: {{claim.DocumentUrl}}
 
             Flag: amounts exceeding coverage, early-claim-after-inception patterns, implausible
             dates, round-number estimates, and duplicate-invoice indicators. Be conservative:

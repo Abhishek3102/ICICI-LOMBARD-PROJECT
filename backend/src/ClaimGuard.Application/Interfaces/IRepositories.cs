@@ -1,4 +1,5 @@
 using ClaimGuard.Domain.Entities;
+using ClaimGuard.Domain.Enums;
 
 namespace ClaimGuard.Application.Interfaces;
 

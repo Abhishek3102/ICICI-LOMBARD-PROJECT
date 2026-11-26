@@ -26,3 +26,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# .NET build output
+backend/**/bin/
+backend/**/obj/

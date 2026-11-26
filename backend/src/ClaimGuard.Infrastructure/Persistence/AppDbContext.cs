@@ -1,5 +1,6 @@
 using ClaimGuard.Application.Interfaces;
 using ClaimGuard.Domain.Entities;
+using ClaimGuard.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 

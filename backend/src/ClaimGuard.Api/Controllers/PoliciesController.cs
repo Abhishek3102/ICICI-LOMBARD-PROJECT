@@ -1,3 +1,4 @@
+using ClaimGuard.Api.Extensions;
 using ClaimGuard.Application.Interfaces;
 using ClaimGuard.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;

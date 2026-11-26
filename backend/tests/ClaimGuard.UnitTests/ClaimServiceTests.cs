@@ -4,6 +4,7 @@ using ClaimGuard.Application.Interfaces;
 using ClaimGuard.Application.Services;
 using ClaimGuard.Domain.Entities;
 using ClaimGuard.Domain.Enums;
+using ClaimGuard.Domain.Events;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;

@@ -6,6 +6,8 @@ using ClaimGuard.Domain.Entities;
 using ClaimGuard.Infrastructure.Options;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+// Disambiguate from ClaimGuard.Domain.Entities.Claim
+using SecurityClaim = System.Security.Claims.Claim;
 
 namespace ClaimGuard.Infrastructure.Security;
 
@@ -23,7 +25,7 @@ public class JwtTokenService : ITokenService
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningSecret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new List<Claim>
+        var claims = new List<SecurityClaim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),

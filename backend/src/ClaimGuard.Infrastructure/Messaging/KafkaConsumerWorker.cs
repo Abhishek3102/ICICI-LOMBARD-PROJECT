@@ -59,7 +59,9 @@ public class KafkaConsumerWorker(
         {
             try
             {
-                var result = await _consumer.ConsumeAsync(stoppingToken);
+                // Confluent.Kafka's IConsumer has no async Consume; the blocking call is
+                // acceptable inside a dedicated BackgroundService loop.
+                var result = _consumer.Consume(stoppingToken);
                 using var scope = scopeFactory.CreateScope();
                 await ProcessClaimAsync(result.Message.Value, result.TopicPartitionOffset.ToString(), scope.ServiceProvider, stoppingToken);
                 _consumer.Commit(result);
