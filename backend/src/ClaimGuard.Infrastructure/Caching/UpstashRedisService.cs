@@ -77,30 +77,46 @@ public class UpstashRedisService : ICacheService, IDisposable
         var db = Db;
         // Degraded mode: let the operation proceed rather than block payouts.
         if (db is null) return true;
-        return await db.StringSetAsync(key, "1", ttl, When.NotExists);
+        try
+        {
+            return await db.StringSetAsync(key, "1", ttl, When.NotExists);
+        }
+        catch (Exception ex) { return Degrade<bool>(ex, true); }
     }
 
-    public Task<bool> HasIdempotencyLockAsync(string key, CancellationToken ct = default)
+    public async Task<bool> HasIdempotencyLockAsync(string key, CancellationToken ct = default)
     {
         var db = Db;
-        if (db is null) return Task.FromResult(false);
-        return db.KeyExistsAsync(key);
+        if (db is null) return false;
+        try
+        {
+            return await db.KeyExistsAsync(key);
+        }
+        catch (Exception ex) { return Degrade<bool>(ex, false); }
     }
 
     public async Task<PolicyCoverageCache?> GetPolicyCacheAsync(Guid policyId, CancellationToken ct = default)
     {
         var db = Db;
         if (db is null) return null;
-        var value = await db.StringGetAsync(PolicyCachePrefix + policyId);
-        if (value.IsNullOrEmpty) return null;
-        return JsonSerializer.Deserialize<PolicyCoverageCache>(value!);
+        try
+        {
+            var value = await db.StringGetAsync(PolicyCachePrefix + policyId);
+            if (value.IsNullOrEmpty) return null;
+            return JsonSerializer.Deserialize<PolicyCoverageCache>(value!);
+        }
+        catch (Exception ex) { return Degrade<PolicyCoverageCache?>(ex, null); }
     }
 
     public async Task SetPolicyCacheAsync(PolicyCoverageCache cache, TimeSpan ttl, CancellationToken ct = default)
     {
         var db = Db;
         if (db is null) return;
-        await db.StringSetAsync(PolicyCachePrefix + cache.PolicyId, JsonSerializer.Serialize(cache), ttl);
+        try
+        {
+            await db.StringSetAsync(PolicyCachePrefix + cache.PolicyId, JsonSerializer.Serialize(cache), ttl);
+        }
+        catch (Exception ex) { Degrade<bool>(ex, false); }
     }
 
     public async Task<bool> IsRateLimitedAsync(string clientKey, int maxRequests, TimeSpan window, CancellationToken ct = default)
@@ -108,11 +124,22 @@ public class UpstashRedisService : ICacheService, IDisposable
         var db = Db;
         // Degraded mode: never rate limit on a cache outage.
         if (db is null) return false;
-        var key = RateLimitPrefix + clientKey;
-        var count = await db.StringIncrementAsync(key);
-        if (count == 1)
-            await db.KeyExpireAsync(key, window);
-        return count > maxRequests;
+        try
+        {
+            var key = RateLimitPrefix + clientKey;
+            var count = await db.StringIncrementAsync(key);
+            if (count == 1)
+                await db.KeyExpireAsync(key, window);
+            return count > maxRequests;
+        }
+        catch (Exception ex) { return Degrade<bool>(ex, false); }
+    }
+
+    // Logs a Redis failure once per outage window and returns the degraded default.
+    private T Degrade<T>(Exception ex, T fallback)
+    {
+        _logger.LogWarning(ex, "[v0] Redis operation failed; serving degraded response.");
+        return fallback;
     }
 
     public void Dispose() => _redis?.Dispose();
