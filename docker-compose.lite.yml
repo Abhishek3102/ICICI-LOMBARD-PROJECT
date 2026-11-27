@@ -15,14 +15,15 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Supabase: ${SUPABASE_CONNECTION}
       Redis__Connection: ${REDIS_CONNECTION}
-      Kafka__BootstrapServers: ${KAFKA_BOOTSTRAP}
-      Kafka__SaslUsername: ${KAFKA_USER}
-      Kafka__SaslPassword: ${KAFKA_PASS}
+      Kafka__BootstrapServers: ${KAFKA_BOOTSTRAP:-${KAFKA_BOOTSTRAP_SERVERS:-}}
+      Kafka__SaslUsername: ${KAFKA_USER:-${KAFKA_SASL_USERNAME:-}}
+      Kafka__SaslPassword: ${KAFKA_PASS:-${KAFKA_SASL_PASSWORD:-}}
+      Kafka__SaslMechanism: ${KAFKA_SASL_MECHANISM:-}
       RabbitMq__Url: ${RABBITMQ_URL}
       Gemini__ApiKey: ${GEMINI_API_KEY}
       Jwt__SigningSecret: ${JWT_SECRET}
       Supabase__Url: ${SUPABASE_URL}
-      Supabase__ServiceRoleKey: ${SUPABASE_SERVICE_KEY}
+      Supabase__ServiceRoleKey: ${SUPABASE_SERVICE_KEY:-${SUPABASE_SERVICE_ROLE_KEY:-}}
       Seed__BootstrapSecret: ${SEED_BOOTSTRAP_SECRET}
       Cors__AllowedOrigins__0: http://localhost:3000
     healthcheck:
