@@ -28,10 +28,11 @@ public static class DependencyInjection
         services.AddScoped<IAuditRepository, AuditRepository>();
 
         // Redis (Upstash). Registered as singleton: ConnectionMultiplexer is thread-safe and
-        // meant to be shared for the process lifetime.
+        // meant to be shared for the process lifetime. Degrades gracefully when unreachable.
         services.AddSingleton<ICacheService>(sp =>
             new UpstashRedisService(
-                sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Options.RedisOptions>>()));
+                sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<Options.RedisOptions>>(),
+                sp.GetRequiredService<ILogger<UpstashRedisService>>()));
 
         // Kafka
         services.AddSingleton<KafkaProducer>();

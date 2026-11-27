@@ -60,15 +60,7 @@ public class RabbitMqPublisher : ITaskQueue, IDisposable
                 };
                 _connection = factory.CreateConnection("claimguard-api");
                 _channel = _connection.CreateModel();
-
-                _channel.ExchangeDeclare(DeadLetterExchange, ExchangeType.Direct, durable: true);
-                _channel.QueueDeclare(DeadLetterQueue, durable: true, exclusive: false, autoDelete: false);
-                _channel.QueueBind(DeadLetterQueue, DeadLetterExchange, routingKey: Queue);
-
-                _channel.ExchangeDeclare(Exchange, ExchangeType.Direct, durable: true);
-                var args = new Dictionary<string, object> { { "x-dead-letter-exchange", DeadLetterExchange } };
-                _channel.QueueDeclare(Queue, durable: true, exclusive: false, autoDelete: false, arguments: args);
-                _channel.QueueBind(Queue, Exchange, routingKey: Queue);
+                DeclareTopology(_channel);
 
                 _logger.LogInformation("[v0] RabbitMQ connected; task queue ready.");
                 return true;
@@ -81,6 +73,20 @@ public class RabbitMqPublisher : ITaskQueue, IDisposable
                 return false;
             }
         }
+    }
+
+    // Idempotent topology declaration, shared with NotificationWorker so the
+    // consumer can start before the publisher has ever connected.
+    internal static void DeclareTopology(IModel channel)
+    {
+        channel.ExchangeDeclare(DeadLetterExchange, ExchangeType.Direct, durable: true);
+        channel.QueueDeclare(DeadLetterQueue, durable: true, exclusive: false, autoDelete: false);
+        channel.QueueBind(DeadLetterQueue, DeadLetterExchange, routingKey: Queue);
+
+        channel.ExchangeDeclare(Exchange, ExchangeType.Direct, durable: true);
+        var args = new Dictionary<string, object> { { "x-dead-letter-exchange", DeadLetterExchange } };
+        channel.QueueDeclare(Queue, durable: true, exclusive: false, autoDelete: false, arguments: args);
+        channel.QueueBind(Queue, Exchange, routingKey: Queue);
     }
 
     public Task EnqueueNotificationAsync(NotificationTask task, CancellationToken ct = default)
@@ -144,6 +150,7 @@ public class NotificationWorker(
                     connection = factory.CreateConnection("claimguard-notifications");
                     channel = connection.CreateModel();
                     channel.BasicQos(0, prefetchCount: 10, global: false);
+                    RabbitMqPublisher.DeclareTopology(channel);
 
                     var consumer = new EventingBasicConsumer(channel);
                     consumer.Received += (_, ea) =>
