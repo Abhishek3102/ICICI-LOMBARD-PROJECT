@@ -22,6 +22,7 @@ builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection(Sup
 
 // ---------- Layers ----------
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHostedService<ClaimGuard.Api.Seed.DatabaseSeeder>();
 
 // ---------- Authentication (JWT) ----------
 var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
