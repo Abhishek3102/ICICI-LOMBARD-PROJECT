@@ -50,25 +50,30 @@ public class KafkaConsumerWorker(
                     ? mechanism
                     : SaslMechanism.ScramSha256,
             SaslUsername = cfg.SaslUsername,
-            SaslPassword = cfg.SaslPassword,
-            SslCaLocation = "certs/ca.pem"
+            SaslPassword = cfg.SaslPassword
         };
 
-        // Aiven signs broker certificates with its own CA. Pin it when certs/ca.pem
-        // exists (download it from the Aiven console); otherwise skip verification
-        // so local runs still connect, with a loud warning instead of a crash.
-        var caPath = new[] { "certs/ca.pem", Path.Combine(AppContext.BaseDirectory, "certs", "ca.pem") }
-            .FirstOrDefault(File.Exists);
+        // Aiven signs broker certificates with its own CA. Pin the CA when
+        // certs/ca.pem exists (repo root or the API project folder); otherwise
+        // skip verification so local runs still connect, with a loud warning.
+        var caPath = new[]
+        {
+            "certs/ca.pem",
+            Path.Combine("backend", "src", "ClaimGuard.Api", "certs", "ca.pem"),
+            Path.Combine(AppContext.BaseDirectory, "certs", "ca.pem")
+        }.FirstOrDefault(File.Exists);
         if (caPath is not null)
         {
             config.SslCaLocation = Path.GetFullPath(caPath);
+            logger.LogInformation("[v0] Kafka TLS pinned to CA certificate {CaPath}", Path.GetFullPath(caPath));
         }
         else
         {
+            config.SslCaLocation = null;
             config.EnableSslCertificateVerification = false;
             logger.LogWarning(
                 "[v0] certs/ca.pem not found - Kafka TLS certificate verification is DISABLED. " +
-                "Download the CA certificate from the Aiven console and save it as certs/ca.pem to fix this.");
+                "Download the CA certificate from the Aiven console and save it as backend/src/ClaimGuard.Api/certs/ca.pem to fix this.");
         }
 
         // A broken Kafka setup must never take the whole API down; degrade to idle.
