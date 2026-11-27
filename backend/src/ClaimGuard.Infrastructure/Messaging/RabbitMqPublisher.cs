@@ -92,11 +92,11 @@ public class RabbitMqPublisher : ITaskQueue, IDisposable
         }
 
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(task));
-        var props = _channel.CreateBasicProperties();
+        var props = _channel!.CreateBasicProperties();
         props.Persistent = true;
         props.ContentType = "application/json";
 
-        _channel.BasicPublish(Exchange, routingKey: Queue, basicProperties: props, body: body);
+        _channel!.BasicPublish(Exchange, routingKey: Queue, basicProperties: props, body: body);
         _logger.LogDebug("[v0] Notification enqueued for {Recipient}", task.Recipient);
         return Task.CompletedTask;
     }

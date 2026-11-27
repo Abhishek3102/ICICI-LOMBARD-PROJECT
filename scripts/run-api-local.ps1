@@ -44,6 +44,12 @@ Get-Content .env | ForEach-Object {
     }
 }
 
+# Fail fast (10s) when the database is unreachable instead of letting
+# requests hang for a minute with no visible error.
+if ($env:ConnectionStrings__Supabase -and $env:ConnectionStrings__Supabase -notmatch 'Timeout=') {
+    $env:ConnectionStrings__Supabase += ';Timeout=10'
+}
+
 $env:ASPNETCORE_ENVIRONMENT = 'Development'
 $env:ASPNETCORE_URLS = 'http://localhost:5000'
 

@@ -83,7 +83,11 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 app.MapMetrics("/metrics");
 
-app.Run();
+app.Start();
+// Explicit startup line: the default "Now listening on" message is hidden by
+// the Microsoft.AspNetCore=Warning log level in appsettings.json.
+app.Logger.LogInformation("[v0] ClaimGuard API listening on {Urls}", string.Join(", ", app.Urls));
+app.WaitForShutdown();
 
 /// <summary>Exposed for integration tests.</summary>
 public partial class Program;
