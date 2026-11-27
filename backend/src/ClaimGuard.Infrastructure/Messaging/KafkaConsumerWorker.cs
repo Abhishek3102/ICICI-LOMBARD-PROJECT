@@ -48,7 +48,8 @@ public class KafkaConsumerWorker(
                 ? SaslMechanism.Plain
                 : SaslMechanism.ScramSha256,
             SaslUsername = cfg.SaslUsername,
-            SaslPassword = cfg.SaslPassword
+            SaslPassword = cfg.SaslPassword,
+            SslCaLocation = "certs/ca.pem"
         };
 
         _consumer = new ConsumerBuilder<string, string>(config).Build();
