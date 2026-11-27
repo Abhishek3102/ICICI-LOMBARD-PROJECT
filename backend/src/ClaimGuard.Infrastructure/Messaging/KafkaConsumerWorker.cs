@@ -46,7 +46,7 @@ public class KafkaConsumerWorker(
                 : SecurityProtocol.SaslSsl,
             SaslMechanism = string.IsNullOrWhiteSpace(cfg.SaslUsername)
                 ? SaslMechanism.Plain
-                : Enum.TryParse<SaslMechanism>(cfg.SaslMechanism, ignoreCase: true, out var mechanism)
+                : TryParseMechanism(cfg.SaslMechanism, out var mechanism)
                     ? mechanism
                     : SaslMechanism.ScramSha256,
             SaslUsername = cfg.SaslUsername,
@@ -61,7 +61,7 @@ public class KafkaConsumerWorker(
             string.IsNullOrEmpty(cfg.SaslPassword) ? -1 : cfg.SaslPassword.Length,
             string.IsNullOrWhiteSpace(cfg.SaslUsername)
                 ? "none"
-                : Enum.TryParse<SaslMechanism>(cfg.SaslMechanism, ignoreCase: true, out var diagMech)
+                : TryParseMechanism(cfg.SaslMechanism, out var diagMech)
                     ? diagMech.ToString()
                     : "ScramSha256");
 
@@ -130,6 +130,14 @@ public class KafkaConsumerWorker(
 
         _consumer.Close();
     }
+
+    // Accepts both .NET enum names (ScramSha512) and the Kafka-standard wire
+    // strings ("SCRAM-SHA-512", "scram-sha-512") by stripping separators first.
+    private static bool TryParseMechanism(string? value, out SaslMechanism mechanism) =>
+        Enum.TryParse(
+            value?.Replace("-", string.Empty).Replace("_", string.Empty).Replace(" ", string.Empty),
+            ignoreCase: true,
+            out mechanism);
 
     private static async Task ProcessClaimAsync(string messageJson, string kafkaOffset, IServiceProvider services, CancellationToken ct)
     {
