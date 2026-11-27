@@ -24,6 +24,7 @@ $map = @{
     'KAFKA_SASL_USERNAME'        = 'Kafka__SaslUsername'
     'KAFKA_PASS'                 = 'Kafka__SaslPassword'
     'KAFKA_SASL_PASSWORD'        = 'Kafka__SaslPassword'
+    'KAFKA_SASL_MECHANISM'       = 'Kafka__SaslMechanism'
     'RABBITMQ_URL'               = 'RabbitMq__Url'
     'GEMINI_API_KEY'             = 'Gemini__ApiKey'
     'JWT_SECRET'                 = 'Jwt__SigningSecret'

@@ -12,6 +12,9 @@ public class KafkaOptions
     public string BootstrapServers { get; set; } = string.Empty;
     public string SaslUsername { get; set; } = string.Empty;
     public string SaslPassword { get; set; } = string.Empty;
+    // Optional: ScramSha256 (default) or ScramSha512, depending on what the
+    // broker enables (Aiven: Kafka settings -> Authentication).
+    public string SaslMechanism { get; set; } = string.Empty;
     public string GroupId { get; set; } = "claimguard-triage";
 }
 

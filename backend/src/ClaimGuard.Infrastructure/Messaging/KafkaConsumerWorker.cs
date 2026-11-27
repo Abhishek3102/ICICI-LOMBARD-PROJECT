@@ -46,7 +46,9 @@ public class KafkaConsumerWorker(
                 : SecurityProtocol.SaslSsl,
             SaslMechanism = string.IsNullOrWhiteSpace(cfg.SaslUsername)
                 ? SaslMechanism.Plain
-                : SaslMechanism.ScramSha256,
+                : Enum.TryParse<SaslMechanism>(cfg.SaslMechanism, ignoreCase: true, out var mechanism)
+                    ? mechanism
+                    : SaslMechanism.ScramSha256,
             SaslUsername = cfg.SaslUsername,
             SaslPassword = cfg.SaslPassword,
             SslCaLocation = "certs/ca.pem"
