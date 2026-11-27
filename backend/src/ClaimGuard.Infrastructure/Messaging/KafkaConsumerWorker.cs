@@ -51,9 +51,36 @@ public class KafkaConsumerWorker(
             SaslPassword = cfg.SaslPassword
         };
 
-        _consumer = new ConsumerBuilder<string, string>(config).Build();
-        _consumer.Subscribe(KafkaTopics.ClaimSubmitted);
-        logger.LogInformation("[v0] AI triage consumer subscribed to {Topic}", KafkaTopics.ClaimSubmitted);
+        // Aiven signs broker certificates with its own CA. Pin it when certs/ca.pem
+        // exists (download it from the Aiven console); otherwise skip verification
+        // so local runs still connect, with a loud warning instead of a crash.
+        var caPath = new[] { "certs/ca.pem", Path.Combine(AppContext.BaseDirectory, "certs", "ca.pem") }
+            .FirstOrDefault(File.Exists);
+        if (caPath is not null)
+        {
+            config.SslCaLocation = Path.GetFullPath(caPath);
+        }
+        else
+        {
+            config.EnableSslCertificateVerification = false;
+            logger.LogWarning(
+                "[v0] certs/ca.pem not found - Kafka TLS certificate verification is DISABLED. " +
+                "Download the CA certificate from the Aiven console and save it as certs/ca.pem to fix this.");
+        }
+
+        // A broken Kafka setup must never take the whole API down; degrade to idle.
+        try
+        {
+            _consumer = new ConsumerBuilder<string, string>(config).Build();
+            _consumer.Subscribe(KafkaTopics.ClaimSubmitted);
+            logger.LogInformation("[v0] AI triage consumer subscribed to {Topic}", KafkaTopics.ClaimSubmitted);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "[v0] Kafka consumer failed to start; AI triage is idle. Check the Kafka settings in .env.");
+            await Task.Delay(Timeout.Infinite, stoppingToken);
+            return;
+        }
 
         while (!stoppingToken.IsCancellationRequested)
         {
