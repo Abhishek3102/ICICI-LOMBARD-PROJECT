@@ -49,7 +49,7 @@ CloudAMQP (RabbitMQ) · Google Gemini · Next.js 16 · Tailwind · Prometheus ·
 |---|---|---|
 | PostgreSQL | Supabase (free) | One project |
 | Redis | Upstash (free) | One Regional database (RESP endpoint) |
-| Kafka | Upstash (free) | One cluster + 3 topics: `claim-submitted`, `claim-scored`, `claim-settled` (1 partition each) |
+| Kafka | Upstash (free) | One cluster + 3 topics: `claim.submitted`, `claim.scored`, `claim.settled` (1 partition each) |
 | RabbitMQ | CloudAMQP (Lemur, free) | One instance |
 | AI | Google AI Studio (free) | One Gemini API key |
 
