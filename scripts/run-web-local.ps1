@@ -14,10 +14,11 @@ if (-not (Test-Path .env)) {
 
 $lines = @('NEXT_PUBLIC_API_BASE_URL=http://localhost:5000')
 
-# Carry over every NEXT_PUBLIC_* key the user already set.
+# Carry over every NEXT_PUBLIC_* key the user already set (skip duplicates).
 Get-Content .env | ForEach-Object {
     if ($_ -match '^\s*(NEXT_PUBLIC_[A-Za-z0-9_]*)\s*=(.*)$') {
-        $lines += "$($Matches[1])=$($Matches[2].Trim().Trim('"'))"
+        $key = "$($Matches[1])=$($Matches[2].Trim().Trim('"'))"
+        if ($lines -notcontains $key) { $lines += $key }
     }
 }
 
@@ -38,5 +39,13 @@ $lines | Set-Content .env.local
 Write-Host 'Wrote .env.local with keys:'
 $lines | ForEach-Object { ($_ -split '=', 2)[0] }
 
-pnpm install
-pnpm dev
+# pnpm may not be on PATH; corepack ships with Node and can run it directly.
+if (Get-Command pnpm -ErrorAction SilentlyContinue) {
+    pnpm install
+    pnpm dev
+} elseif (Get-Command corepack -ErrorAction SilentlyContinue) {
+    corepack pnpm install
+    corepack pnpm dev
+} else {
+    Write-Error 'Neither pnpm nor corepack was found. Install Node.js 22 (https://nodejs.org), then rerun this script.'
+}
