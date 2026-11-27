@@ -27,6 +27,11 @@ public class KafkaConsumerWorker(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Yield before the blocking Consume loop: ExecuteAsync runs synchronously
+        // until its first await, and StartAsync would otherwise block host startup
+        // (Kestrel included) until a message arrived — deadlocking the API.
+        await Task.Yield();
+
         var cfg = options.Value;
         if (string.IsNullOrWhiteSpace(cfg.BootstrapServers))
         {
