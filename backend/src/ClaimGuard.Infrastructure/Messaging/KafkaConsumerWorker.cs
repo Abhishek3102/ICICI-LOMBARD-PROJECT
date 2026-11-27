@@ -53,6 +53,18 @@ public class KafkaConsumerWorker(
             SaslPassword = cfg.SaslPassword
         };
 
+        // Diagnostic: log the effective username and password LENGTH (never the
+        // secret) so truncated or mismatched .env values are easy to spot.
+        logger.LogInformation(
+            "[v0] Kafka config: bootstrap={Bootstrap}, user={User}, passwordLength={PasswordLength}, mechanism={Mechanism}",
+            cfg.BootstrapServers, cfg.SaslUsername,
+            string.IsNullOrEmpty(cfg.SaslPassword) ? -1 : cfg.SaslPassword.Length,
+            string.IsNullOrWhiteSpace(cfg.SaslUsername)
+                ? "none"
+                : Enum.TryParse<SaslMechanism>(cfg.SaslMechanism, ignoreCase: true, out var diagMech)
+                    ? diagMech.ToString()
+                    : "ScramSha256");
+
         // Aiven signs broker certificates with its own CA. Pin the CA when
         // certs/ca.pem exists (repo root or the API project folder); otherwise
         // skip verification so local runs still connect, with a loud warning.
