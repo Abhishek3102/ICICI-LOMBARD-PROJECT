@@ -31,11 +31,22 @@ public class KafkaProducer : IDisposable
                 : SecurityProtocol.SaslSsl,
             SaslMechanism = string.IsNullOrWhiteSpace(cfg.SaslUsername)
                 ? SaslMechanism.Plain
-                : SaslMechanism.ScramSha256,
+                // Normalize "SCRAM-SHA-512" style wire strings the same way the
+                // consumer does, so both sides always agree on the mechanism.
+                : Enum.TryParse(
+                        cfg.SaslMechanism?.Replace("-", string.Empty).Replace("_", string.Empty).Replace(" ", string.Empty),
+                        ignoreCase: true, out SaslMechanism prodMechanism)
+                    ? prodMechanism
+                    : SaslMechanism.ScramSha256,
             SaslUsername = cfg.SaslUsername,
             SaslPassword = cfg.SaslPassword,
             EnableIdempotence = true,
-            Acks = Acks.All
+            Acks = Acks.All,
+
+            // Match the consumer: survive NAT/firewall drops of long-lived
+            // connections on home networks and VPNs.
+            SocketKeepaliveEnable = true,
+            ConnectionsMaxIdleMs = 180_000
         };
         _producer = new ProducerBuilder<string, string>(config).Build();
     }

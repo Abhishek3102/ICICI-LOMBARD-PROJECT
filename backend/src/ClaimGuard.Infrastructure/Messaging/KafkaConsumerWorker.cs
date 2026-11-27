@@ -50,7 +50,16 @@ public class KafkaConsumerWorker(
                     ? mechanism
                     : SaslMechanism.ScramSha256,
             SaslUsername = cfg.SaslUsername,
-            SaslPassword = cfg.SaslPassword
+            SaslPassword = cfg.SaslPassword,
+
+            // Home networks/VPNs silently drop long-lived TCP connections,
+            // which shows up as session/heartbeat timeouts after several
+            // minutes. Keepalive and a shorter idle window make the client
+            // detect and replace dead connections quickly.
+            SocketKeepaliveEnable = true,
+            ConnectionsMaxIdleMs = 180_000,
+            SessionTimeoutMs = 30_000,
+            HeartbeatIntervalMs = 9_000
         };
 
         // Diagnostic: log the effective username and password LENGTH (never the
